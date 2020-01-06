@@ -3,6 +3,7 @@
 #usage : lumpy2site.py results.txt taille_tpson/plasmide
 #lancer sur results.txt
 #~/scripts/python/lumpy2site/lumpy2site_inprocess.py res.txt 2156
+#/home/lhelou/scripts/python/lumpy2site/lumpy2site_inprocess.py /home/lhelou/ancestralSpecies/Analyses/profil_insertion/analyse_pgep/second_run/IFP2_IFP2/trimo/extract_20/results.txt 2156 > res030120
 
 import sys,re,os,cgi,csv, getopt, argparse, time, math, shutil
 from copy import deepcopy
@@ -33,9 +34,13 @@ def lumpy_2_final (input_file, te_size):
 			first_evidence = True
 			count_7_col = False
 			count_8_col = False
-			#best_value = False
-			#print (line)
 			i=i+1
+			#recupInfoGFF
+			Chr_splitted = re.split('\s+',line_chr)
+			nb_chr = Chr_splitted[1] #numero chr
+			bkpt = Chr_splitted[2] #position du breakpoint/site insertion "exact" sur le génomique
+			details = Chr_splitted[8] #informations relatives aux nb de reads supportant l'événement, etc.
+
 			while (i<len(lines)):
 				search_evidence = re.search('^\s+Evidence', lines[i])
 				search_next_site = re.search('^chr', lines[i])
@@ -46,57 +51,43 @@ def lumpy_2_final (input_file, te_size):
 				elif (search_evidence):
 					line_splitted = re.split('\s+',lines[i])
 
-					start = int(line_splitted[7])
-					end = int(line_splitted[8])
-					#print ("start =",start)
+					startTpson = int(line_splitted[7])
+					endTpson = int(line_splitted[8])
+
+					#info gff
+					startChr = line_splitted[4] #position de début sur génomique
+					endChr = line_splitted[5] #pos fin génomique
+					fq = line_splitted[2] #nom du read qui supporte l'info
+
 					if first_evidence == True : #Première évidence
-						#best_value = False
 						first_evidence = False
 
-						if (start < (int(te_size) - end)) : #on met en place l'algo : on part sur le comptage de 7
-						#if int(line_splitted[7]) < (int(te_size) - int(line_splitted[8])) :
-							#print("start ",start,"\ntpson-end ",int(te_size) - end,"\n")
+						if (startTpson < (int(te_size) - endTpson)) : #on met en place l'algo : on part sur le comptage de 7
 							count_7_col = True
-							#best_value = False
 						else : #ou de 8
 							count_8_col = True
-							#best_value = False
 					if count_7_col == True : #si on compte sur 7
-						if 'best_value' not in locals() :
-						#if best_value == False : # On lance et on stocke la premiere valeur de la col 7 de l'evidence (et la ligne
-							best_value = start
+						if 'best_value' not in locals() : #on verifie que best_value n'est pas encore défini et on stock la première valeur de la col 7 de l'évidence ainsi que la ligne
+							best_value = startTpson
 							dict_chr_line[line_chr] = lines[i]
-							best_end = end
-							#print ("bestvalue false deb : ",best_value)
-						else :
-							#best_value
-							if (start <= best_value and end >= best_end): # Si jamais, dans les lignes suivantes, la valeur de la col 7 qu'on lit est < a celle qui est stockee, on ecrase ladite
-								#if (end>best_end):
-								best_value = start
-								dict_chr_line[line_chr] = lines[i]
-								best_end = end
-							#print ("la ligne", lines[i])
-						# elif (start > best_value):
-						# 	pass
+							best_end = endTpson
 
+						else :
+							if (startTpson <= best_value and endTpson >= best_end): # Si jamais, dans les lignes suivantes, la valeur de la col 7 qu'on lit est < a celle qui est stockee, on ecrase ladite
+								best_value = startTpson
+								dict_chr_line[line_chr] = lines[i]
+								best_end = endTpson
 
 					elif count_8_col == True : #si on compte sur 8
-						if 'best_value' not in locals() :
-						#if best_value == False : # On lance et on stocke la premiere valeur de la col 8 de l'evidence (et la ligne)
-							best_value = end
+						if 'best_value' not in locals() : #on verifie que best_value n'est pas encore défini et on stock la première valeur de la col 7 de l'évidence ainsi que la ligne
+							best_value = endTpson
 							dict_chr_line[line_chr] = lines[i]
-							best_start = start
-							#print ("bestvalue false deb : ",best_value)
+							best_start = startTpson
 						else :
-							if (end >= best_value and best_start >= start) : # Si jamais, dans les lignes suivantes, la valeur de la col 8 qu'on lit est > a celle qui est stockee, on ecrase ladite valeur
-								#if (best_start<=start):
-								best_value = end
+							if (endTpson >= best_value and best_start >= startTpson) : # Si jamais, dans les lignes suivantes, la valeur de la col 8 qu'on lit est > a celle qui est stockee, on ecrase ladite valeur
+								best_value = endTpson
 								dict_chr_line[line_chr] = lines[i]
-					#print (start,"\t",end,"\n")
-
 				i=i+1
-
-#	print (dict_chr_line)
 
 	for key in dict_chr_line :
 		print(key)
