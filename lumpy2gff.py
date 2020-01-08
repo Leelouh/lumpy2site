@@ -77,7 +77,11 @@ def lumpy_2_final (input_file, te_size):
 							dict_chr_line[line_chr] = lines[i]
 
 						else :
-							if (startTpson <= best_value and endTpson >= best_end): # Si jamais, dans les lignes suivantes, la valeur de la col 7 qu'on lit est < a celle qui est stockee, on ecrase ladite
+							if (startTpson < best_value): #nontestée
+								best_value = startTpson
+								best_end = endTpson
+								dict_chr_line[line_chr] = lines[i]
+							elif (startTpson <= best_value and endTpson >= best_end): # Si jamais, dans les lignes suivantes, la valeur de la col 7 qu'on lit est < a celle qui est stockee, on ecrase ladite
 								best_value = startTpson
 								best_end = endTpson
 								dict_chr_line[line_chr] = lines[i]
@@ -88,9 +92,13 @@ def lumpy_2_final (input_file, te_size):
 							best_start = startTpson
 							dict_chr_line[line_chr] = lines[i]
 						else :
-							if (endTpson >= best_value and startTpson <= best_start) : # Si jamais, dans les lignes suivantes, la valeur de la col 8 qu'on lit est > a celle qui est stockee, on ecrase ladite valeur
-
+							if (endTpson > best_value):# and startTpson <= best_start) : # Si jamais, dans les lignes suivantes, la valeur de la col 8 qu'on lit est > a celle qui est stockee, on ecrase ladite valeur
 								best_value = endTpson
+								best_start = startTpson
+								dict_chr_line[line_chr] = lines[i]
+							elif (endTpson >= best_value and startTpson <= best_start):
+								best_value = endTpson
+								best_start = startTpson
 								dict_chr_line[line_chr] = lines[i]
 				i=i+1
 
