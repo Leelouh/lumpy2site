@@ -38,9 +38,12 @@ def lumpy_2_final (input_file, te_size):
 			#recupInfoGFF
 			Chr_splitted = re.split('\s+',line_chr)
 			nb_chr = Chr_splitted[0] #numero chr
-			#print (nb_chr)
 			bkpt = Chr_splitted[1] #position du breakpoint/site insertion "exact" sur le génomique
 			details = Chr_splitted[7] #informations relatives aux nb de reads supportant l'événement, etc.
+
+			tab_details= re.split(';', details)
+			strand = tab_details[1]
+			SU = tab_details[9]
 
 			while (i<len(lines)):
 				search_evidence = re.search('^\s+Evidence', lines[i])
@@ -70,42 +73,50 @@ def lumpy_2_final (input_file, te_size):
 					if count_7_col == True : #si on compte sur 7
 						if 'best_value' not in locals() : #on verifie que best_value n'est pas encore défini et on stock la première valeur de la col 7 de l'évidence ainsi que la ligne
 							best_value = startTpson
-							#dict_chr_line[line_chr] = lines[i]
-
-							#print("gff info :",gff_infos,"\n")
-							#dict_chr_line[line_chr] = {nb_chr,"Lumpy","Insertion",startChr,endChr,".","+",".","."}
-							gff_infos = [nb_chr,'Lumpy','Insertion',str(startChr),str(endChr),'.','+','.','BREAKPOINT='+bkpt+';'+details+';READ='+fq+';Pos_tpson='+str(startTpson)+':'+str(endTpson)]
-							dict_chr_line[line_chr] = gff_infos
 							best_end = endTpson
+							dict_chr_line[line_chr] = lines[i]
 
 						else :
 							if (startTpson <= best_value and endTpson >= best_end): # Si jamais, dans les lignes suivantes, la valeur de la col 7 qu'on lit est < a celle qui est stockee, on ecrase ladite
 								best_value = startTpson
-#								dict_chr_line[line_chr] = lines[i]
-								gff_infos = [nb_chr,'Lumpy','Insertion',str(startChr),str(endChr),'.','+','.','BREAKPOINT='+bkpt+';'+details+';READ='+fq+';Pos_tpson='+str(startTpson)+':'+str(endTpson)]
-								dict_chr_line[line_chr] = gff_infos
 								best_end = endTpson
+								dict_chr_line[line_chr] = lines[i]
 
 					elif count_8_col == True : #si on compte sur 8
 						if 'best_value' not in locals() : #on verifie que best_value n'est pas encore défini et on stock la première valeur de la col 7 de l'évidence ainsi que la ligne
 							best_value = endTpson
-#							dict_chr_line[line_chr] = lines[i]
-							gff_infos = [nb_chr,'Lumpy','Insertion',str(startChr),str(endChr),'.','+','.','BREAKPOINT='+bkpt+';'+details+';READ='+fq+';Pos_tpson='+str(startTpson)+'_'+str(endTpson)]
-							dict_chr_line[line_chr] = gff_infos
 							best_start = startTpson
+							dict_chr_line[line_chr] = lines[i]
 						else :
-							if (endTpson >= best_value and best_start >= startTpson) : # Si jamais, dans les lignes suivantes, la valeur de la col 8 qu'on lit est > a celle qui est stockee, on ecrase ladite valeur
+							if (endTpson >= best_value and startTpson <= best_start) : # Si jamais, dans les lignes suivantes, la valeur de la col 8 qu'on lit est > a celle qui est stockee, on ecrase ladite valeur
+
 								best_value = endTpson
-#								dict_chr_line[line_chr] = lines[i]
-							gff_infos = [nb_chr,'Lumpy','Insertion',str(startChr),str(endChr),'.','+','.','BREAKPOINT='+bkpt+';'+details+';READ='+fq+';Pos_tpson='+str(startTpson)+':'+str(endTpson)]
-							dict_chr_line[line_chr] = gff_infos
+								dict_chr_line[line_chr] = lines[i]
 				i=i+1
 
-	for values in dict_chr_line.values() :
-		print('\t'.join(values))
-		#print(key)
-		#print(dict_chr_line[key], sep='\t')
-#		print(dict_chr_line[key])
+	for key in dict_chr_line :
+		Chr_splitted = re.split('\s+',key)
+		nb_chr = Chr_splitted[0] #numero chr
+		bkpt = Chr_splitted[1] #position du breakpoint/site insertion "exact" sur le génomique
+		details = Chr_splitted[7] #informations relatives aux nb de reads supportant l'événement, etc.
+
+		tab_details= re.split(';', details)
+		strand = tab_details[1]
+		SU = tab_details[9]
+
+		evidence_splitted = re.split('\s+',dict_chr_line[key])
+
+		startTpson = int(evidence_splitted[7])
+		endTpson = int(evidence_splitted[8])
+
+		#info gff
+		startChr = evidence_splitted[4] #position de début sur génomique
+		endChr = evidence_splitted[5] #pos fin génomique
+		fq = evidence_splitted[2] #nom du read qui supporte l'info
+
+		gff_infos = [nb_chr,'Lumpy','Insertion',str(startChr),str(endChr),'.','+','.','BREAKPOINT='+bkpt+';'+strand+';READ='+fq+';TPSON='+str(startTpson)+'_'+str(endTpson)]
+		print ('\t'.join(gff_infos))
+
 
 with open(sys.argv[1], 'r') as input_file_data : #On ouvre le fichier d'entrée pour le lire
 	input_file = input_file_data.read()
