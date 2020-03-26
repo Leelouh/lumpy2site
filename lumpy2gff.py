@@ -12,10 +12,6 @@ from numpy import *
 import scipy as sp
 from pandas import *
 
-def create_output_dir (output_dir): #Fonction pour creer un dir
-	directory = output_dir
-	if not os.path.isdir(directory):
-		os.makedirs(directory)
 
 def lumpy_2_final (input_file, te_size):
 	lines = input_file.split("\n")
@@ -74,32 +70,56 @@ def lumpy_2_final (input_file, te_size):
 						if 'best_value' not in locals() : #on verifie que best_value n'est pas encore défini et on stock la première valeur de la col 7 de l'évidence ainsi que la ligne
 							best_value = startTpson
 							best_end = endTpson
-							dict_chr_line[line_chr] = lines[i]
+							bkptTpson = startTpson
+							myL = lines[i] + " " + str(bkptTpson)
+							dict_chr_line[line_chr] = myL
+							#dict_chr_line[line_chr] = lines[i]
+
 
 						else :
 							if (startTpson < best_value): #nontestée
 								best_value = startTpson
 								best_end = endTpson
-								dict_chr_line[line_chr] = lines[i]
+								bkptTpson = startTpson
+								myL = lines[i] + " " + str(bkptTpson)
+								dict_chr_line[line_chr] = myL
+								#dict_chr_line[line_chr] = lines[i]+str(bkptTpson)
+
 							elif (startTpson <= best_value and endTpson >= best_end): # Si jamais, dans les lignes suivantes, la valeur de la col 7 qu'on lit est < a celle qui est stockee, on ecrase ladite
 								best_value = startTpson
 								best_end = endTpson
-								dict_chr_line[line_chr] = lines[i]
+								bkptTpson = startTpson
+								myL = lines[i] + " " + str(bkptTpson)
+								dict_chr_line[line_chr] = myL
+								#dict_chr_line[line_chr] = lines[i]+str(bkptTpson)
+
 
 					elif count_8_col == True : #si on compte sur 8
 						if 'best_value' not in locals() : #on verifie que best_value n'est pas encore défini et on stock la première valeur de la col 7 de l'évidence ainsi que la ligne
 							best_value = endTpson
 							best_start = startTpson
-							dict_chr_line[line_chr] = lines[i]
+							bkptTpson = endTpson
+							myL = lines[i] + " " + str(bkptTpson)
+							dict_chr_line[line_chr] = myL
+							#dict_chr_line[line_chr] = lines[i]+str(bkptTpson)
+
 						else :
 							if (endTpson > best_value):# and startTpson <= best_start) : # Si jamais, dans les lignes suivantes, la valeur de la col 8 qu'on lit est > a celle qui est stockee, on ecrase ladite valeur
 								best_value = endTpson
 								best_start = startTpson
-								dict_chr_line[line_chr] = lines[i]
+								bkptTpson = endTpson
+								myL = lines[i] + " " + str(bkptTpson)
+								dict_chr_line[line_chr] = myL
+								#dict_chr_line[line_chr] = lines[i]+str(bkptTpson)
+
 							elif (endTpson >= best_value and startTpson <= best_start):
 								best_value = endTpson
 								best_start = startTpson
-								dict_chr_line[line_chr] = lines[i]
+								bkptTpson = endTpson
+								myL = lines[i] + " " + str(bkptTpson)
+								dict_chr_line[line_chr] = myL
+								#dict_chr_line[line_chr] = lines[i]+str(bkptTpson)
+
 				i=i+1
 
 	for key in dict_chr_line :
@@ -107,6 +127,9 @@ def lumpy_2_final (input_file, te_size):
 		nb_chr = Chr_splitted[0] #numero chr
 		bkpt = Chr_splitted[1] #position du breakpoint/site insertion "exact" sur le génomique
 		details = Chr_splitted[7] #informations relatives aux nb de reads supportant l'événement, etc.
+		bkpt_tpson_main = Chr_splitted[4]
+		#bkpt_tpson_main = str(re.match(":(\d+)\D", regexBkpt))
+#		bkpt_tpson_main = str(re_bkptLumpy.findall(regexBkpt)) #re.search(".*:(\d+)]", regexBkpt)
 
 		tab_details= re.split(';', details)
 		strand = tab_details[1]
@@ -122,7 +145,9 @@ def lumpy_2_final (input_file, te_size):
 		endChr = evidence_splitted[5] #pos fin génomique
 		fq = evidence_splitted[2] #nom du read qui supporte l'info
 
-		gff_infos = [nb_chr,'Lumpy','Insertion',str(startChr),str(endChr),'.','+','.','BREAKPOINT='+bkpt+';'+strand+';READ='+fq+';TPSON='+str(startTpson)+'_'+str(endTpson)]
+		bkptTp=evidence_splitted[15]
+
+		gff_infos = [nb_chr,'Lumpy','Insertion',str(startChr),str(endChr),'.','+','.','BREAKPOINT='+bkpt+';'+strand+';READ='+fq+';TPSON='+str(startTpson)+'_'+str(endTpson)+';BKPTpson='+bkptTp+';BKPTpsonRef='+bkpt_tpson_main]
 		print ('\t'.join(gff_infos))
 
 
