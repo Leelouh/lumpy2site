@@ -11,10 +11,31 @@ from random import randrange, uniform
 from numpy import *
 import scipy as sp
 from pandas import *
+import argparse
+
+parser = argparse.ArgumentParser(add_help=True)
+
+parser.add_argument('-in', action='store', type=str, help="file from extract_bnd_with_evid.py", dest="in")
+parser.add_argument('-out', action='store', type=str, help="output file with results", dest="out")
+parser.add_argument('-size', action='store', type=int, help="size of the transposon ex: -size 2133", dest="size")
+
+args = vars(parser.parse_args())
+
+if (args["in"] is None or args["out"] is None or args["size"] is None): #check whether the arguments have been passed
+	parser.print_help()
+	sys.exit()
+else :
+	pass
+
+input = args["in"]
+
+output = args["out"]
+
+te_size = args["size"]
 
 
-def lumpy_2_final (input_file, te_size):
-	lines = input_file.split("\n")
+def lumpy_2_final (input, te_size, output):
+	lines = input.split("\n")
 	i = 0
 
 	dict_chr_line = {}
@@ -147,13 +168,15 @@ def lumpy_2_final (input_file, te_size):
 
 		bkptTp=evidence_splitted[15]
 
+
 		gff_infos = [nb_chr,'Lumpy','Insertion',str(startChr),str(endChr),'.','+','.','BREAKPOINT='+bkpt+';'+strand+';READ='+fq+';TPSON='+str(startTpson)+'_'+str(endTpson)+';BKPTpson='+bkptTp+';BKPTpsonRef='+bkpt_tpson_main]
-		print ('\t'.join(gff_infos))
+
+		with open(output, 'a') as my_file_results:
+			my_file_results.write('\t'.join(gff_infos)+ "\n")
 
 
-with open(sys.argv[1], 'r') as input_file_data : #On ouvre le fichier d'entrée pour le lire
+with open(input, 'r') as input_file_data : #On ouvre le fichier d'entrée pour le lire
 	input_file = input_file_data.read()
 
-te_size = sys.argv[2]
 
-lumpy_2_final(input_file, te_size)
+lumpy_2_final(input_file, te_size, output)
