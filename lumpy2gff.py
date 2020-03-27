@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 
-#usage : lumpy2site.py results.txt taille_tpson/plasmide
-#lancer sur results.txt
-#~/scripts/python/lumpy2site/lumpy2site_inprocess.py res.txt 2156
-#/home/lhelou/scripts/python/lumpy2site/lumpy2site_inprocess.py /home/lhelou/ancestralSpecies/Analyses/profil_insertion/analyse_pgep/second_run/IFP2_IFP2/trimo/extract_20/results.txt 2156 > res030120
-
 import sys,re,os,cgi,csv, getopt, argparse, time, math, shutil
 from copy import deepcopy
 from random import randrange, uniform
@@ -54,9 +49,9 @@ def lumpy_2_final (input, te_size, output):
 			i=i+1
 			#recupInfoGFF
 			Chr_splitted = re.split('\s+',line_chr)
-			nb_chr = Chr_splitted[0] #numero chr
-			bkpt = Chr_splitted[1] #position du breakpoint/site insertion "exact" sur le génomique
-			details = Chr_splitted[7] #informations relatives aux nb de reads supportant l'événement, etc.
+			nb_chr = Chr_splitted[0] #chr nb
+			bkpt = Chr_splitted[1] #exact breakpoint/site position insertion on genomics
+			details = Chr_splitted[7] #information about the nb of reads supporting the event, etc.
 
 			tab_details= re.split(';', details)
 			strand = tab_details[1]
@@ -76,62 +71,56 @@ def lumpy_2_final (input, te_size, output):
 					endTpson = int(line_splitted[8])
 
 					#info gff
-					startChr = line_splitted[4] #position de début sur génomique
-					endChr = line_splitted[5] #pos fin génomique
-					fq = line_splitted[2] #nom du read qui supporte l'info
+					startChr = line_splitted[4] #start position on genomics
+					endChr = line_splitted[5] #end pos on genomics
+					fq = line_splitted[2] #read name that supports the information
 
-					if first_evidence == True : #Première évidence
+					if first_evidence == True : #First evidence
 						first_evidence = False
 
-						if (startTpson < (int(te_size) - endTpson)) : #on met en place l'algo : on part sur le comptage de 7
+						if (startTpson < (int(te_size) - endTpson)) : #we set up the algo: we start with a count on the 7th column...
 							count_7_col = True
 						else : #ou de 8
 							count_8_col = True
-					if count_7_col == True : #si on compte sur 7
-						if 'best_value' not in locals() : #on verifie que best_value n'est pas encore défini et on stock la première valeur de la col 7 de l'évidence ainsi que la ligne
+					if count_7_col == True : #if we count on 7
+						if 'best_value' not in locals() : #we check that best_value is not yet defined and we store the first value of col 7 of the evidence as well as the line
 							best_value = startTpson
 							best_end = endTpson
 							bkptTpson = startTpson
 							myL = lines[i] + " " + str(bkptTpson)
 							dict_chr_line[line_chr] = myL
-							#dict_chr_line[line_chr] = lines[i]
-
 
 						else :
-							if (startTpson < best_value): #nontestée
+							if (startTpson < best_value):
 								best_value = startTpson
 								best_end = endTpson
 								bkptTpson = startTpson
 								myL = lines[i] + " " + str(bkptTpson)
 								dict_chr_line[line_chr] = myL
-								#dict_chr_line[line_chr] = lines[i]+str(bkptTpson)
 
-							elif (startTpson <= best_value and endTpson >= best_end): # Si jamais, dans les lignes suivantes, la valeur de la col 7 qu'on lit est < a celle qui est stockee, on ecrase ladite
+							elif (startTpson <= best_value and endTpson >= best_end): #If ever, in the following lines, the value of col 7 that we read is < the stored value, we overwrite the said col 7.
 								best_value = startTpson
 								best_end = endTpson
 								bkptTpson = startTpson
 								myL = lines[i] + " " + str(bkptTpson)
 								dict_chr_line[line_chr] = myL
-								#dict_chr_line[line_chr] = lines[i]+str(bkptTpson)
 
 
-					elif count_8_col == True : #si on compte sur 8
-						if 'best_value' not in locals() : #on verifie que best_value n'est pas encore défini et on stock la première valeur de la col 7 de l'évidence ainsi que la ligne
+					elif count_8_col == True : #if we count on 8
+						if 'best_value' not in locals() : #we check that best_value is not yet defined and we store the first value of col 7 of the evidence as well as the line
 							best_value = endTpson
 							best_start = startTpson
 							bkptTpson = endTpson
 							myL = lines[i] + " " + str(bkptTpson)
 							dict_chr_line[line_chr] = myL
-							#dict_chr_line[line_chr] = lines[i]+str(bkptTpson)
 
 						else :
-							if (endTpson > best_value):# and startTpson <= best_start) : # Si jamais, dans les lignes suivantes, la valeur de la col 8 qu'on lit est > a celle qui est stockee, on ecrase ladite valeur
+							if (endTpson > best_value): #If ever, in the following lines, the value of collar 8 that we read is > to the one stored, we overwrite the said value
 								best_value = endTpson
 								best_start = startTpson
 								bkptTpson = endTpson
 								myL = lines[i] + " " + str(bkptTpson)
 								dict_chr_line[line_chr] = myL
-								#dict_chr_line[line_chr] = lines[i]+str(bkptTpson)
 
 							elif (endTpson >= best_value and startTpson <= best_start):
 								best_value = endTpson
@@ -139,18 +128,15 @@ def lumpy_2_final (input, te_size, output):
 								bkptTpson = endTpson
 								myL = lines[i] + " " + str(bkptTpson)
 								dict_chr_line[line_chr] = myL
-								#dict_chr_line[line_chr] = lines[i]+str(bkptTpson)
 
 				i=i+1
 
 	for key in dict_chr_line :
 		Chr_splitted = re.split('\s+',key)
-		nb_chr = Chr_splitted[0] #numero chr
-		bkpt = Chr_splitted[1] #position du breakpoint/site insertion "exact" sur le génomique
-		details = Chr_splitted[7] #informations relatives aux nb de reads supportant l'événement, etc.
+		nb_chr = Chr_splitted[0] #chr nb
+		bkpt = Chr_splitted[1] #breakpoint/site position "exact" insertion on genomics
+		details = Chr_splitted[7] #information about the nb of reads supporting the event, etc.
 		bkpt_tpson_main = Chr_splitted[4]
-		#bkpt_tpson_main = str(re.match(":(\d+)\D", regexBkpt))
-#		bkpt_tpson_main = str(re_bkptLumpy.findall(regexBkpt)) #re.search(".*:(\d+)]", regexBkpt)
 
 		tab_details= re.split(';', details)
 		strand = tab_details[1]
@@ -162,9 +148,9 @@ def lumpy_2_final (input, te_size, output):
 		endTpson = int(evidence_splitted[8])
 
 		#info gff
-		startChr = evidence_splitted[4] #position de début sur génomique
-		endChr = evidence_splitted[5] #pos fin génomique
-		fq = evidence_splitted[2] #nom du read qui supporte l'info
+		startChr = evidence_splitted[4] #start position on genomics
+		endChr = evidence_splitted[5] #genomic pos fin
+		fq = evidence_splitted[2] #name of the read that supports the info
 
 		bkptTp=evidence_splitted[15]
 
@@ -175,7 +161,7 @@ def lumpy_2_final (input, te_size, output):
 			my_file_results.write('\t'.join(gff_infos)+ "\n")
 
 
-with open(input, 'r') as input_file_data : #On ouvre le fichier d'entrée pour le lire
+with open(input, 'r') as input_file_data : 
 	input_file = input_file_data.read()
 
 
